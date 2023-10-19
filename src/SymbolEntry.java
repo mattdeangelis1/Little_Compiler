@@ -1,12 +1,12 @@
-public class SymbolEntry {
+public class SymbolEntry<T> {
 
     String name;
     String type;
-    String value;
+    T value = null;
 
-    SymbolEntry next;
+    SymbolEntry<?> next;
 
-    public SymbolEntry(String name, String type, String value){
+    public SymbolEntry(String name, String type, T value){
         this.name = name;
         this.type = type;
         this.value = value;
