@@ -29,19 +29,22 @@ public class SimpleTableBuilder extends LittleBaseListener {
         scopeStack.pop();
     }
 
-
     @Override public void enterElse_part(LittleParser.Else_partContext ctx) {
 
-        SymbolTable symbolTable = new SymbolTable("BLOCK " + currentBlockNumber);
-        symbolTableList.add(symbolTable);
-        scopeStack.push(symbolTable);
-        currentBlockNumber++;
+        if (!ctx.getText().isEmpty()){
+            SymbolTable symbolTable = new SymbolTable("BLOCK " + currentBlockNumber);
+            symbolTableList.add(symbolTable);
+            scopeStack.push(symbolTable);
+            currentBlockNumber++;
+        }
 
     }
 
     @Override public void exitElse_part(LittleParser.Else_partContext ctx) {
 
-        scopeStack.pop();
+        if (!ctx.getText().isEmpty()){
+            scopeStack.pop();
+        }
 
     }
 
@@ -59,11 +62,20 @@ public class SimpleTableBuilder extends LittleBaseListener {
     @Override public void enterFunc_decl(LittleParser.Func_declContext ctx) {
         SymbolTable symbolTable = new SymbolTable(ctx.id().getText());
 
-
         if (ctx.param_decl_list() != null && ctx.param_decl_list().param_decl() != null) {
             if (ctx.param_decl_list().param_decl().var_type() != null && ctx.param_decl_list().param_decl().id() != null) {
 
                 symbolTable.insert(new SymbolEntry<>(ctx.param_decl_list().param_decl().id().getText(), ctx.param_decl_list().param_decl().var_type().getText(), null));
+
+                LittleParser.Param_decl_tailContext current = ctx.param_decl_list().param_decl_tail();
+
+                while (current.param_decl_tail() != null){
+                    symbolTable.insert(new SymbolEntry<>(current.param_decl().id().getText(), current.param_decl().var_type().getText(), null));
+                    current = current.param_decl_tail();
+                }
+
+                System.out.println(ctx.param_decl_list().getText());
+                System.out.println(ctx.param_decl_list().param_decl_tail().param_decl().getText());
 
             }
         }
@@ -82,10 +94,6 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
         String type = ctx.var_type().getText();
 
-        //id tail needs to account for declarations like INT a,b,c,d
-
-       // System.out.println(ctx.id_list().getText());
-
         String[] names = ctx.id_list().getText().split(",");
 
         for (String name : names) {
@@ -93,7 +101,6 @@ public class SimpleTableBuilder extends LittleBaseListener {
             scopeStack.peek().insert(new SymbolEntry<>(name, type, null));
 
         }
-
     }
 
     @Override public void enterString_decl(LittleParser.String_declContext ctx) {
@@ -102,17 +109,17 @@ public class SimpleTableBuilder extends LittleBaseListener {
         String type = "STRING";
         String value = ctx.str().getText() != null  ? ctx.str().getText() : null;
 
-        scopeStack.peek().insert(new SymbolEntry<String>(name, type, value));
+        scopeStack.peek().insert(new SymbolEntry<>(name, type, value));
 
     }
 
     public void prettyPrint() {
 
-        for (SymbolTable symbolTable : symbolTableList) {
+        for (int i = 0;i < symbolTableList.size();i++) {
 
-            System.out.println("Symbol table " + symbolTable.getScope());
+            System.out.println("Symbol table " + symbolTableList.get(i).getScope());
 
-            SymbolEntry<?> current = symbolTable.getHead();
+            SymbolEntry<?> current = symbolTableList.get(i).getHead();
 
             Stack<SymbolEntry<?>> stack = new Stack<>();
 
@@ -137,7 +144,10 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
             }
 
-            System.out.println();
+            if (i!=symbolTableList.size()-1){
+                System.out.println();
+            }
+
 
         }
     }
