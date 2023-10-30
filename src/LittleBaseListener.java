@@ -187,6 +187,7 @@ public class LittleBaseListener implements LittleListener {
 	@Override public void enterFunc_declarations(LittleParser.Func_declarationsContext ctx) { }
 	/**
 	 * {@inheritDoc}
+	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
