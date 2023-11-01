@@ -7,6 +7,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
     public Stack<SymbolTable> scopeStack = new Stack<>();
     int currentBlockNumber = 1;
 
+
     @Override public void enterProgram(LittleParser.ProgramContext ctx) {
         SymbolTable global = new SymbolTable("GLOBAL");
         symbolTableList.add(global);
@@ -87,9 +88,6 @@ public class SimpleTableBuilder extends LittleBaseListener {
     @Override public void exitFunc_decl(LittleParser.Func_declContext ctx){
         scopeStack.pop();
     }
-
-
-
 
 
     @Override
