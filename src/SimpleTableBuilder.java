@@ -3,6 +3,7 @@ import java.util.Stack;
 
 public class SimpleTableBuilder extends LittleBaseListener {
 
+
     public ArrayList<SymbolTable> symbolTableList = new ArrayList<>();
     public Stack<SymbolTable> scopeStack = new Stack<>();
     int currentBlockNumber = 1;
@@ -17,6 +18,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
         }
 
     }
+
 
     @Override public void enterProgram(LittleParser.ProgramContext ctx) {
         SymbolTable global = new SymbolTable("GLOBAL");
