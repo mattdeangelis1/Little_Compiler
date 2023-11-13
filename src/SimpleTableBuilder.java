@@ -7,6 +7,17 @@ public class SimpleTableBuilder extends LittleBaseListener {
     public ArrayList<SymbolTable> symbolTableList = new ArrayList<>();
     public Stack<SymbolTable> scopeStack = new Stack<>();
     int currentBlockNumber = 1;
+    boolean errorDetected = false;
+    ArrayList<String> errorVarNames = new ArrayList<>();
+
+    public void duplicateChecker(String id){
+
+        if (scopeStack.peek().lookup(id) != null){
+            errorVarNames.add(id);
+            errorDetected = true;
+        }
+
+    }
 
 
     @Override public void enterProgram(LittleParser.ProgramContext ctx) {
@@ -71,13 +82,11 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
                 LittleParser.Param_decl_tailContext current = ctx.param_decl_list().param_decl_tail();
 
-                while (current.param_decl_tail() != null){
+                while (current.param_decl_tail() != null) {
+
                     symbolTable.insert(new SymbolEntry<>(current.param_decl().id().getText(), current.param_decl().var_type().getText(), null));
                     current = current.param_decl_tail();
                 }
-
-                System.out.println(ctx.param_decl_list().getText());
-                System.out.println(ctx.param_decl_list().param_decl_tail().param_decl().getText());
 
             }
         }
@@ -88,6 +97,14 @@ public class SimpleTableBuilder extends LittleBaseListener {
     }
 
     @Override public void exitFunc_decl(LittleParser.Func_declContext ctx){
+
+
+        if (scopeStack.peek().hasDuplicates() != null){
+            errorVarNames.add(scopeStack.peek().hasDuplicates());
+            errorDetected = true;
+        }
+
+
         scopeStack.pop();
     }
 
@@ -101,6 +118,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
         for (String name : names) {
 
+            duplicateChecker(name);
             scopeStack.peek().insert(new SymbolEntry<>(name, type, null));
 
         }
@@ -112,11 +130,17 @@ public class SimpleTableBuilder extends LittleBaseListener {
         String type = "STRING";
         String value = ctx.str().getText() != null  ? ctx.str().getText() : null;
 
+        duplicateChecker(name);
         scopeStack.peek().insert(new SymbolEntry<>(name, type, value));
 
     }
 
     public void prettyPrint() {
+
+        if (errorDetected){
+            System.out.println("DECLARATION ERROR " + errorVarNames.get(0));
+            return;
+        }
 
         for (int i = 0;i < symbolTableList.size();i++) {
 

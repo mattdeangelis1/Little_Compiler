@@ -1,3 +1,5 @@
+import java.util.HashSet;
+
 public class SymbolTable {
 
     private String scope;
@@ -33,5 +35,19 @@ public class SymbolTable {
         return null;
     }
 
+    public String hasDuplicates() {
+        HashSet<String> set = new HashSet<>();
+        SymbolEntry<?> current = head;
 
+        while (current != null) {
+            if (set.contains(current.name)) {
+                return current.name;
+            }
+            set.add(current.name);
+            current = current.next;
+        }
+        return null;
+    }
 }
+
+
