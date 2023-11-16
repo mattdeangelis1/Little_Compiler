@@ -91,6 +91,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
             }
         }
 
+
         symbolTableList.add(symbolTable);
         scopeStack.push(symbolTable);
     }
