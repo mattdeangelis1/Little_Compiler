@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 public class SimpleTableBuilder extends LittleBaseListener {
 
@@ -108,9 +109,6 @@ public class SimpleTableBuilder extends LittleBaseListener {
         scopeStack.pop();
     }
 
-
-
-
     @Override
     public void enterVar_decl(LittleParser.Var_declContext ctx) {
 
@@ -136,6 +134,61 @@ public class SimpleTableBuilder extends LittleBaseListener {
         scopeStack.peek().insert(new SymbolEntry<>(name, type, value));
 
     }
+
+
+    @Override public void enterWrite_stmt(LittleParser.Write_stmtContext ctx) {
+        System.out.println(ctx.getText());
+    }
+
+    @Override public void enterExpr_prefix(LittleParser.Expr_prefixContext ctx) {
+        System.out.print("Expr_prefix");
+        System.out.println(ctx.getText());
+    }
+
+    @Override public void enterFactor(LittleParser.FactorContext ctx) {
+        System.out.print("Factor");
+        System.out.println(ctx.getText());
+    }
+
+    @Override public void enterRead_stmt(LittleParser.Read_stmtContext ctx) {
+        System.out.print("Read");
+        System.out.println(ctx.getText());
+    }
+
+    @Override public void enterAssign_expr(LittleParser.Assign_exprContext ctx) {
+        System.out.print("Assign");
+        System.out.println(ctx.getText());
+
+        if (ctx.expr().getText().contains("+") || ctx.expr().getText().contains("-") || ctx.expr().getText().contains("/") || ctx.expr().getText().contains("*")){
+
+            System.out.println(ctx.getText().split(":=")[0]);
+
+            String type = "";
+
+            for (SymbolTable table : symbolTableList){
+                if (table.lookup(ctx.getText().split(":=")[0]) != null){
+
+                    type = table.lookup(ctx.getText().split(":=")[0]).type;
+                    break;
+
+                }
+            }
+
+            String operation = Character.toString(ctx.expr().getText().charAt(1));
+            String first = ctx.getText().split(Pattern.quote(operation))[0].split(":=")[1];
+            String second = ctx.getText().split(Pattern.quote(operation))[1];
+
+
+            System.out.println(first);
+            System.out.println(second);
+            System.out.println(operation);
+            System.out.println(type);
+
+        }
+
+    }
+
+
 
     public void prettyPrint() {
 
@@ -180,4 +233,9 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
         }
     }
+
+    
+
+
+
 }
