@@ -178,10 +178,6 @@ public class SimpleTableBuilder extends LittleBaseListener {
             String first = ctx.getText().split(Pattern.quote(operation))[0].split(":=")[1];
             String second = ctx.getText().split(Pattern.quote(operation))[1];
 
-
-
-
-
             System.out.println(first);
             System.out.println(second);
             System.out.println(operation);
