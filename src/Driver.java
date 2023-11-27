@@ -8,6 +8,8 @@ import java.io.InputStream;
 public class Driver {
     public static void main(String[] args) throws Exception {
 
+        System.out.println(";IR code");
+
         CharStream input = CharStreams.fromStream(System.in);
 
         LittleLexer littleLexer = new LittleLexer(input);
@@ -42,7 +44,7 @@ public class Driver {
         SimpleTableBuilder stb = new SimpleTableBuilder();
 
         walker.walk(stb, tree);
-        stb.prettyPrint();
+        //stb.prettyPrint();
 
     }
 }

@@ -10,6 +10,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
     int currentBlockNumber = 1;
     boolean errorDetected = false;
     ArrayList<String> errorVarNames = new ArrayList<>();
+    int register = 1;
 
     public void duplicateChecker(String id){
 
@@ -28,6 +29,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
     }
 
     @Override public void exitProgram(LittleParser.ProgramContext ctx) {
+        System.out.println(";RET\n;tiny code");
         scopeStack.pop();
     }
 
@@ -92,6 +94,8 @@ public class SimpleTableBuilder extends LittleBaseListener {
             }
         }
 
+        System.out.println(";LABEL " + ctx.id().getText());
+        System.out.println(";LINK");
 
         symbolTableList.add(symbolTable);
         scopeStack.push(symbolTable);
@@ -104,6 +108,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
             errorVarNames.add(scopeStack.peek().hasDuplicates());
             errorDetected = true;
         }
+
 
 
         scopeStack.pop();
@@ -137,56 +142,77 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
 
     @Override public void enterWrite_stmt(LittleParser.Write_stmtContext ctx) {
-        System.out.println(ctx.getText());
-    }
 
-    @Override public void enterExpr_prefix(LittleParser.Expr_prefixContext ctx) {
-        System.out.print("Expr_prefix");
-        System.out.println(ctx.getText());
-    }
+        String[] ids = ctx.id_list().getText().split(",");
 
-    @Override public void enterFactor(LittleParser.FactorContext ctx) {
-        System.out.print("Factor");
-        System.out.println(ctx.getText());
-    }
+        for (String id : ids){
 
-    @Override public void enterRead_stmt(LittleParser.Read_stmtContext ctx) {
-        System.out.print("Read");
-        System.out.println(ctx.getText());
-    }
-
-    @Override public void enterAssign_expr(LittleParser.Assign_exprContext ctx) {
-        System.out.print("Assign");
-        System.out.println(ctx.getText());
-
-        if (ctx.expr().getText().contains("+") || ctx.expr().getText().contains("-") || ctx.expr().getText().contains("/") || ctx.expr().getText().contains("*")){
-
-            System.out.println(ctx.getText().split(":=")[0]);
-
-            String type = "";
-
-            for (SymbolTable table : symbolTableList){
-                if (table.lookup(ctx.getText().split(":=")[0]) != null){
-
-                    type = table.lookup(ctx.getText().split(":=")[0]).type;
+            for (SymbolTable table : symbolTableList) {
+                if (table.lookup(id) != null) {
+                    System.out.println(";WRITE" + table.lookup(id).type.charAt(0) + " " + id);
                     break;
-
                 }
             }
-
-            String operation = Character.toString(ctx.expr().getText().charAt(1));
-            String first = ctx.getText().split(Pattern.quote(operation))[0].split(":=")[1];
-            String second = ctx.getText().split(Pattern.quote(operation))[1];
-
-            System.out.println(first);
-            System.out.println(second);
-            System.out.println(operation);
-            System.out.println(type);
 
         }
 
     }
 
+
+    @Override public void enterRead_stmt(LittleParser.Read_stmtContext ctx) {
+        String[] ids = ctx.id_list().getText().split(",");
+
+        for (String id : ids){
+
+            for (SymbolTable table : symbolTableList) {
+                if (table.lookup(id) != null) {
+                    System.out.println(";READ" + table.lookup(id).type.charAt(0) + " " + id);
+                    break;
+                }
+            }
+
+        }
+
+    }
+
+    @Override public void enterAssign_expr(LittleParser.Assign_exprContext ctx) {
+
+        String type = "";
+
+        for (SymbolTable table : symbolTableList){
+            if (table.lookup(ctx.getText().split(":=")[0]) != null){
+
+                type = table.lookup(ctx.getText().split(":=")[0]).type;
+                break;
+
+            }
+        }
+
+        if (ctx.expr().getText().contains("+") || ctx.expr().getText().contains("-") || ctx.expr().getText().contains("/") || ctx.expr().getText().contains("*")){
+
+            String operation = Character.toString(ctx.expr().getText().charAt(1));
+            String first = ctx.getText().split(Pattern.quote(operation))[0].split(":=")[1];
+            String second = ctx.getText().split(Pattern.quote(operation))[1];
+
+            if (operation.equals("*")){
+                System.out.println(";MULT" + type.charAt(0) + " " + first + " " + second + " $T" + register);
+            }else if(operation.equals("/")){
+                System.out.println(";DIV" + type.charAt(0) + " " + first + " " + second + " $T" + register);
+            }else if(operation.equals("-")){
+                System.out.println(";SUB" + type.charAt(0) + " " + first + " " + second + " $T" + register);
+            }else if(operation.equals("+")){
+                System.out.println(";ADD" + type.charAt(0) + " " + first + " " + second + " $T" + register);
+            }
+            System.out.println(";STORE" + type.charAt(0) + " $T" + register + " " + ctx.getText().split(":=")[0]);
+            register++;
+
+        }else{
+            System.out.println(";STORE"  + type.charAt(0) + " " + ctx.getText().split(":=")[1] + " $T" + register);
+            System.out.println(";STORE"  + type.charAt(0) + " $T" + register + " " + ctx.getText().split(":=")[0]);
+            register++;
+        }
+
+    }
 
 
     public void prettyPrint() {
