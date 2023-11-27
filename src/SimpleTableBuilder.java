@@ -12,6 +12,8 @@ public class SimpleTableBuilder extends LittleBaseListener {
     ArrayList<String> errorVarNames = new ArrayList<>();
     int register = 1;
 
+    StringBuilder tinyCode = new StringBuilder();
+
     public void duplicateChecker(String id){
 
         if (scopeStack.peek().lookup(id) != null){
@@ -30,6 +32,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
     @Override public void exitProgram(LittleParser.ProgramContext ctx) {
         System.out.println(";RET\n;tiny code");
+        tinyCode.append("sys halt\n");
         scopeStack.pop();
     }
 
@@ -123,6 +126,8 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
         for (String name : names) {
 
+            tinyCode.append("var ").append(name).append("\n");
+
             duplicateChecker(name);
             scopeStack.peek().insert(new SymbolEntry<>(name, type, null));
 
@@ -134,6 +139,8 @@ public class SimpleTableBuilder extends LittleBaseListener {
         String name = ctx.id().getText();
         String type = "STRING";
         String value = ctx.str().getText() != null  ? ctx.str().getText() : null;
+
+        tinyCode.append("var ").append(name).append(" ").append("\"").append(value).append("\"");
 
         duplicateChecker(name);
         scopeStack.peek().insert(new SymbolEntry<>(name, type, value));
@@ -150,6 +157,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
             for (SymbolTable table : symbolTableList) {
                 if (table.lookup(id) != null) {
                     System.out.println(";WRITE" + table.lookup(id).type.charAt(0) + " " + id);
+                    tinyCode.append("sys").append(" ").append("write").append(table.lookup(id).type.toLowerCase().charAt(0)).append(" ").append(id).append("\n");
                     break;
                 }
             }
@@ -166,7 +174,9 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
             for (SymbolTable table : symbolTableList) {
                 if (table.lookup(id) != null) {
-                    System.out.println(";READ" + table.lookup(id).type.charAt(0) + " " + id);
+                    char type = table.lookup(id).type.charAt(0);
+                    System.out.println(";READ" + type + " " + id);
+                    tinyCode.append("sys").append(" ").append("read").append(type).append(" ").append(id).append("\n");
                     break;
                 }
             }
@@ -194,21 +204,30 @@ public class SimpleTableBuilder extends LittleBaseListener {
             String first = ctx.getText().split(Pattern.quote(operation))[0].split(":=")[1];
             String second = ctx.getText().split(Pattern.quote(operation))[1];
 
+            tinyCode.append("move ").append(first).append(" ").append("r").append(register).append("\n");
+
             if (operation.equals("*")){
                 System.out.println(";MULT" + type.charAt(0) + " " + first + " " + second + " $T" + register);
+                tinyCode.append("mul").append(type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
             }else if(operation.equals("/")){
                 System.out.println(";DIV" + type.charAt(0) + " " + first + " " + second + " $T" + register);
+                tinyCode.append("div").append(type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
             }else if(operation.equals("-")){
                 System.out.println(";SUB" + type.charAt(0) + " " + first + " " + second + " $T" + register);
+                tinyCode.append("sub").append(type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
             }else if(operation.equals("+")){
                 System.out.println(";ADD" + type.charAt(0) + " " + first + " " + second + " $T" + register);
+                tinyCode.append("add").append(type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
             }
             System.out.println(";STORE" + type.charAt(0) + " $T" + register + " " + ctx.getText().split(":=")[0]);
+            tinyCode.append("move ").append("r").append(register).append(" ").append(ctx.getText().split(":=")[0]).append("\n");
             register++;
 
         }else{
             System.out.println(";STORE"  + type.charAt(0) + " " + ctx.getText().split(":=")[1] + " $T" + register);
             System.out.println(";STORE"  + type.charAt(0) + " $T" + register + " " + ctx.getText().split(":=")[0]);
+            tinyCode.append("move ").append(ctx.getText().split(":=")[1]).append(" ").append("r").append(register-1).append("\n");
+            tinyCode.append("move ").append("r").append(register-1).append(" ").append(ctx.getText().split(":=")[0]).append("\n");
             register++;
         }
 
@@ -217,46 +236,48 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
     public void prettyPrint() {
 
+        System.out.println(tinyCode);
+
         if (errorDetected){
             System.out.println("DECLARATION ERROR " + errorVarNames.get(0));
             return;
         }
 
-        for (int i = 0;i < symbolTableList.size();i++) {
-
-            System.out.println("Symbol table " + symbolTableList.get(i).getScope());
-
-            SymbolEntry<?> current = symbolTableList.get(i).getHead();
-
-            Stack<SymbolEntry<?>> stack = new Stack<>();
-
-            while (current != null) {
-
-                stack.push(current);
-
-                current = current.next;
-            }
-
-            while(!stack.isEmpty()){
-
-                current = stack.pop();
-
-                System.out.print("name " + current.name + " type " + current.type);
-
-                if (current.value != null) {
-                    System.out.println(" value " + current.value);
-                }else{
-                    System.out.println();
-                }
-
-            }
-
-            if (i!=symbolTableList.size()-1){
-                System.out.println();
-            }
-
-
-        }
+//        for (int i = 0;i < symbolTableList.size();i++) {
+//
+//            System.out.println("Symbol table " + symbolTableList.get(i).getScope());
+//
+//            SymbolEntry<?> current = symbolTableList.get(i).getHead();
+//
+//            Stack<SymbolEntry<?>> stack = new Stack<>();
+//
+//            while (current != null) {
+//
+//                stack.push(current);
+//
+//                current = current.next;
+//            }
+//
+//            while(!stack.isEmpty()){
+//
+//                current = stack.pop();
+//
+//                System.out.print("name " + current.name + " type " + current.type);
+//
+//                if (current.value != null) {
+//                    System.out.println(" value " + current.value);
+//                }else{
+//                    System.out.println();
+//                }
+//
+//            }
+//
+//            if (i!=symbolTableList.size()-1){
+//                System.out.println();
+//            }
+//
+//
+//        }
     }
 
     

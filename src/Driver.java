@@ -44,7 +44,7 @@ public class Driver {
         SimpleTableBuilder stb = new SimpleTableBuilder();
 
         walker.walk(stb, tree);
-        //stb.prettyPrint();
+        stb.prettyPrint();
 
     }
 }
