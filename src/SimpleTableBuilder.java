@@ -140,7 +140,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
         String type = "STRING";
         String value = ctx.str().getText() != null  ? ctx.str().getText() : null;
 
-        tinyCode.append("var ").append(name).append(" ").append("\"").append(value).append("\"");
+        tinyCode.append("str ").append(name).append(" ").append(value).append("\n");
 
         duplicateChecker(name);
         scopeStack.peek().insert(new SymbolEntry<>(name, type, value));
@@ -157,7 +157,7 @@ public class SimpleTableBuilder extends LittleBaseListener {
             for (SymbolTable table : symbolTableList) {
                 if (table.lookup(id) != null) {
                     System.out.println(";WRITE" + table.lookup(id).type.charAt(0) + " " + id);
-                    tinyCode.append("sys").append(" ").append("write").append(table.lookup(id).type.toLowerCase().charAt(0)).append(" ").append(id).append("\n");
+                    tinyCode.append("sys").append(" ").append("write").append(table.lookup(id).type.toLowerCase().charAt(0) == 'f' ? 'r' : table.lookup(id).type.toLowerCase().charAt(0)).append(" ").append(id).append("\n");
                     break;
                 }
             }
@@ -200,24 +200,35 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
         if (ctx.expr().getText().contains("+") || ctx.expr().getText().contains("-") || ctx.expr().getText().contains("/") || ctx.expr().getText().contains("*")){
 
-            String operation = Character.toString(ctx.expr().getText().charAt(1));
-            String first = ctx.getText().split(Pattern.quote(operation))[0].split(":=")[1];
-            String second = ctx.getText().split(Pattern.quote(operation))[1];
+            String operation = "";
+
+            if (ctx.expr().getText().contains("+")){
+                operation = "+";
+            } else if (ctx.expr().getText().contains("-")){
+                operation = "-";
+            } else if (ctx.expr().getText().contains("/")){
+                operation = "/";
+            } else {
+                operation = "*";
+            }
+
+            String first = ctx.getText().split(Pattern.quote(operation))[0].split(":=")[1].replace("(", "").replace(")", "");
+            String second = ctx.getText().split(Pattern.quote(operation))[1].replace("(", "").replace(")", "");
 
             tinyCode.append("move ").append(first).append(" ").append("r").append(register).append("\n");
 
             if (operation.equals("*")){
                 System.out.println(";MULT" + type.charAt(0) + " " + first + " " + second + " $T" + register);
-                tinyCode.append("mul").append(type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
+                tinyCode.append("mul").append(type.equals("FLOAT") ? "r" : type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
             }else if(operation.equals("/")){
                 System.out.println(";DIV" + type.charAt(0) + " " + first + " " + second + " $T" + register);
-                tinyCode.append("div").append(type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
+                tinyCode.append("div").append(type.equals("FLOAT") ? "r" : type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
             }else if(operation.equals("-")){
                 System.out.println(";SUB" + type.charAt(0) + " " + first + " " + second + " $T" + register);
-                tinyCode.append("sub").append(type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
+                tinyCode.append("sub").append(type.equals("FLOAT") ? "r" : type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
             }else if(operation.equals("+")){
                 System.out.println(";ADD" + type.charAt(0) + " " + first + " " + second + " $T" + register);
-                tinyCode.append("add").append(type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
+                tinyCode.append("add").append(type.equals("FLOAT") ? "r" : type.toLowerCase().charAt(0)).append(" ").append(second).append(" r").append(register).append("\n");
             }
             System.out.println(";STORE" + type.charAt(0) + " $T" + register + " " + ctx.getText().split(":=")[0]);
             tinyCode.append("move ").append("r").append(register).append(" ").append(ctx.getText().split(":=")[0]).append("\n");
