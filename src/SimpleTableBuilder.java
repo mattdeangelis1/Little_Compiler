@@ -8,7 +8,8 @@ public class SimpleTableBuilder extends LittleBaseListener {
     public ArrayList<SymbolTable> symbolTableList = new ArrayList<>();
     public Stack<SymbolTable> scopeStack = new Stack<>();
     int currentBlockNumber = 1;
-    boolean errorDetected = false;
+    private boolean errorDetected = false;
+    private String firstErrorVarName = null;
     ArrayList<String> errorVarNames = new ArrayList<>();
     int register = 1;
 
@@ -22,7 +23,17 @@ public class SimpleTableBuilder extends LittleBaseListener {
         }
 
     }
-
+    private void checkAndInsertSymbol(String name, String type) {
+        SymbolTable currentScope = scopeStack.peek();
+        if (currentScope.lookup(name) != null) {
+            if (firstErrorVarName == null) {
+                firstErrorVarName = name;
+            }
+            errorDetected = true;
+            return;
+        }
+        currentScope.insert(new SymbolEntry<>(name, type, null));
+    }
 
     @Override public void enterProgram(LittleParser.ProgramContext ctx) {
         SymbolTable global = new SymbolTable("GLOBAL");
@@ -119,18 +130,10 @@ public class SimpleTableBuilder extends LittleBaseListener {
 
     @Override
     public void enterVar_decl(LittleParser.Var_declContext ctx) {
-
         String type = ctx.var_type().getText();
-
-        String[] names = ctx.id_list().getText().split(",");
-
-        for (String name : names) {
-
-            tinyCode.append("var ").append(name).append("\n");
-
-            duplicateChecker(name);
-            scopeStack.peek().insert(new SymbolEntry<>(name, type, null));
-
+        for (String name : ctx.id_list().getText().split(",")) {
+            tinyCode.append("var ").append(name).append('\n');
+            checkAndInsertSymbol(name, type);
         }
     }
 
